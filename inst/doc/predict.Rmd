@@ -1,0 +1,116 @@
+---
+title: "More in predicting sequences"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{predict}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Selecting the model
+
+`deepredeff` provides a selection of models trained on sequences from different phytopathogen taxa. It is important to select the correct model. Each taxon is represented by just one model at the moment. You can select the model by setting the taxon in the main function, `predict_effector()`. Available values are `bacteria`, `fungi` and `oomycete`.
+
+```{r, eval=FALSE}
+predict_effector(
+  input = "my_fungal_seqs.fa",
+  taxon = "fungi"
+)
+```
+
+For each taxon, `deepredeff` uses a different model. These models are: 
+
+- `bacteria`: `ensemble_weighted`, which is a weighted ensemble model of CNN-LSTM, CNN-GRU, GRU Embedding, and LSTM-Embedding. 
+- `fungi`: CNN-LSTM.
+- `oomycete`: CNN-LSTM. 
+
+The model used for your prediction will also be shown when you run the function `predict_effector()` or when you run `summary()`.
+
+```{r include=FALSE}
+# Load libraries
+library(dplyr)
+library(deepredeff)
+```
+
+
+## Importing from different data sources
+
+### Sequences in a dataframe
+
+Here we will take example of fungal sequences in data frame format called `input_fungi_df` as shown below:
+
+```r
+input_fungi_df 
+```
+
+```{r echo=FALSE}
+input_fungi_df <- system.file("extdata/example/fungi_sample.fasta", package = "deepredeff") %>%
+  deepredeff::fasta_to_df() %>%
+  mutate(sequence = stringr::str_replace_all(sequence, "(.{50,}?)", "\\1 "))
+
+knitr::kable(input_fungi_df %>% head(2), "html") %>%
+  kableExtra::column_spec(column = 2, width = "50em", monospace = TRUE) %>%
+  kableExtra::column_spec(column = 1, monospace = TRUE)
+```
+
+`deepredeff` accepts these directly. To predict fungal effectors, you can specify the model to `taxon= "fungi"`. 
+
+```r
+pred_fungi <- predict_effector(
+  input = input_fungi_df,
+  taxon = "fungi"
+)
+#> Loaded models successfully!
+#> Model used for taxon fungi: cnn_lstm.
+```
+
+### Sequences in AAStringSet
+
+In the same way as with the dataframe and fasta files we can use a Bioconductor AAStringSet object:
+
+```r
+input_oomycete_aastringset
+#> AAStringSet object of length 10:
+#>     width seq                                              names               
+#> [1]   820 MVKLYCAVVGVAGSAFSVRVDES...SKKGKTAMILSRMHYDDDEADL sp|A0A0M5K865|CR1...
+#> [2]   111 MRLAQVVVVIAASFLVATDALST...FQRYQKKANKIIEKQKAAAKNA tr|A5YTY8|A5YTY8_...
+```
+
+To predict oomycete effectors, you can specify the model to `taxon= "oomycete"`. 
+
+```r
+pred_oomycete <- predict_effector(
+  input = input_oomycete_aastringset,
+  taxon = "oomycete"
+)
+#> Loaded models successfully!
+#> Model used for taxon oomycete: cnn_lstm.
+```
+
+### Predict from character vectors
+
+The same applies if we provide a character vector. Let us take an example of data in string format.
+
+```r
+input_bacteria_strings
+#> [1] "MPINRPAFNLKLNTAIAQ..."
+#> [2] "MQFMSRINRILFVAV..."
+```
+
+To predict bacteria effectors, you can specify the model to `taxon = "bacteria"`. 
+
+```r
+pred_bacteria <- predict_effector(
+  input = input_bacteria_strings,
+  taxon = "bacteria"
+)
+#> Loaded models successfully!
+#> Model used for taxon bacteria: ensemble_weighted.
+```
